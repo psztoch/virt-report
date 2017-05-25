@@ -1,4 +1,13 @@
 #!/usr/bin/python
+
+#
+# Report virtual machines using libvirt.
+#
+# Copyright (C) 2017 Przemyslaw Sztoch. All Rights Reserved.
+#
+# This script is provided under a BSD-ish license. See LICENSE file.
+#
+
 from __future__ import print_function
 import sys
 import libvirt
@@ -30,7 +39,7 @@ libvirt.registerErrorHandler(ignore, None)
 
 parser = argparse.ArgumentParser(
     description='Report virtual machines using libvirt.',
-    epilog="Hosts file format is simple text file with two columns: " + 
+    epilog="Host file format is simple text file with two columns: " + 
     "connection URI and optional short name.")
 parser.add_argument('--hostfile', '-f', help='file with host list')
 parser.add_argument('--connect', '-c', help='connect to the specified URI')
