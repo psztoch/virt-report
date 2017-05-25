@@ -33,3 +33,5 @@ Abbreviations:
 - A - autostart
 
 Unit for all numbers is gigabyte (1024 * 1024 * 1024).
+
+![Screenshot no 1](docs/virt-report-screenshot1.png?raw=true "Example Screenshot")
