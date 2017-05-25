@@ -20,3 +20,16 @@ Example of use:
     myhosts -o host
     myhosts --hosts
     myhosts --guests -o mem
+
+Abbreviations:
+St - state
+R - running
+B - blocked
+P - paused
+S - during shutdown
+s - shutoff
+C - crashed
+p - pmsuspended
+A - autostart
+
+Unit for all numbers is gigabyte (1024 * 1024 * 1024).
