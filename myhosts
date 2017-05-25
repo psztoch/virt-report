@@ -1,0 +1,7 @@
+#!virt-report -f
+qemu+ssh://box1.example.org/system	box1
+#qemu+ssh://box2.example.org/system	box2
+qemu+ssh://box3a.example.org/system	box3a
+qemu+ssh://box3b.example.org/system	box3b
+qemu+ssh://box3c.example.org/system	box3c
+qemu+ssh://box3d.example.org/system	box3d
