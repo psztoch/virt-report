@@ -44,6 +44,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument('--hostfile', '-f', help='file with host list')
 parser.add_argument('--connect', '-c', help='connect to the specified URI')
 parser.add_argument('--guests', '-G', action='store_true', help='show table with guests')
+parser.add_argument('--plaindata', action='store_true', help='Plain data output format')
 parser.add_argument('--description', '-d', action='store_true', help='show descriptions')
 parser.add_argument('--hosts', '-H', action='store_true', help='show summary table with hosts')
 parser.add_argument('--order', '-o', default='name',
@@ -194,14 +195,14 @@ for host in hosts:
             try:
                 libvirt_qemu.qemuAgentCommand(domain,'{"execute":"guest-ping"}',5,0)
                 item['agent'] = True                
+                domain_time = domain.getTime()
+                if domain_time is not None:
+                    item['time'] = domain_time['seconds']
+                    delta = time.time() - domain_time['seconds']
+                    item['err_time'] = (delta < -5 or 5 < delta)
             except libvirt.libvirtError as e:
                 if e.get_error_code() == libvirt.VIR_ERR_AGENT_UNRESPONSIVE:
                     item['err_agent'] = True
-            domain_time = domain.getTime()
-            if domain_time is not None:
-                item['time'] = domain_time['seconds']
-                delta = time.time() - domain_time['seconds']
-                item['err_time'] = (delta < -5 or 5 < delta)
 
         try:
             item['title'] = domain.metadata(libvirt.VIR_DOMAIN_METADATA_TITLE, None)
@@ -253,33 +254,37 @@ for item in items:
     total['allblk'] += item['allblk']
     total['snapshot'] += item['snapshot']
 
-format_title = "{:" + str(total['maxlen_name']) + "} " + \
-    "{:" + str(total['maxlen_host']) + "} " + \
-    "{:3} {:1} {:>7} {:>7} {:>4} {:>7} {:>7} {:>5} " + \
-    "{:>5} " + \
-    "{:" + str(total['maxlen_title']) + "}"
-format_item = "{:" + str(total['maxlen_name']) + "} " + \
-    "{:" + str(total['maxlen_host']) + "} " + \
-    "{:3} {:1} {:7,.1f} {:7,.1f} {:4,d} {:7,.1f} {:7,.1f} {:5} "
+items.sort(key=({
+    'name':lambda i: i['name'],
+    'mem':lambda i: (-i['curmem'],i['name']),
+    'cpu':lambda i: (-i['curcpu'],i['name']),
+    'blk':lambda i: (-i['capblk'],i['name']),
+    'host':lambda i: (i['host'],i['name']),
+    'host-mem':lambda i: (i['host'],-i['curmem'],i['name']),
+    'host-cpu':lambda i: (i['host'],-i['curcpu'],i['name']),
+    'host-blk':lambda i: (i['host'],-i['capblk'],i['name'])
+    }[args.order]))
 
-if args.guests:
+if args.guests and args.plaindata:
+    for item in items:
+        print(item['name'],item['host'],item['state_desc'])
+
+if args.guests and not args.plaindata:
+    format_title = "{:" + str(total['maxlen_name']) + "} " + \
+        "{:" + str(total['maxlen_host']) + "} " + \
+        "{:3} {:1} {:>7} {:>7} {:>4} {:>7} {:>7} {:>5} " + \
+        "{:>5} " + \
+        "{:" + str(total['maxlen_title']) + "}"
+    format_item = "{:" + str(total['maxlen_name']) + "} " + \
+        "{:" + str(total['maxlen_host']) + "} " + \
+        "{:3} {:1} {:7,.1f} {:7,.1f} {:4,d} {:7,.1f} {:7,.1f} {:5} "
+
     if 0 < len(items):
         print(colored_text(format_title.format( \
             'Name','Host','St','A','CurMem','MaxMem','CPU','DiskCap','DiskAll','Agent', 'Snaps', 'Title' \
             ), HEADER_MODE))
     else:
         print('Guest list is empty!')
-
-    items.sort(key=({
-        'name':lambda i: i['name'],
-        'mem':lambda i: (-i['curmem'],i['name']),
-        'cpu':lambda i: (-i['curcpu'],i['name']),
-        'blk':lambda i: (-i['capblk'],i['name']),
-        'host':lambda i: (i['host'],i['name']),
-        'host-mem':lambda i: (i['host'],-i['curmem'],i['name']),
-        'host-cpu':lambda i: (i['host'],-i['curcpu'],i['name']),
-        'host-blk':lambda i: (i['host'],-i['capblk'],i['name'])
-        }[args.order]))
 
     for item in items:
         item_mode = None
@@ -332,7 +337,11 @@ if args.guests:
             )
     print()
 
-if args.hosts:
+if args.hosts and args.plaindata:
+    for host in hosts:
+        print(host['name'],host['item'],item['curmem'],item['curcpu'])
+
+if args.hosts and not args.plaindata:
     format_title = "{:"+str(total['maxlen_host'])+"} " + \
         "{:>6} {:>11} {:>11} {:>11} {:>11} {:>9} {:>9} {:>11} {:>11} {:>9}"
     format_item = "{:"+str(total['maxlen_host'])+"} " + \
